@@ -1,0 +1,55 @@
+version: 2.1
+orbs:
+  python: circleci/python@1.5.0
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.10.2
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+      - run: pip install coverage
+      - run:
+          name: Run tests
+          working_directory: ~/project/tests/
+          environment:
+            PYTHONPATH: /home/circleci/project/
+          command: python -m unittest discover -p "tests.py"
+      - run:
+          name: Create coverage Report
+          working_directory: ~/project/tests/
+          environment:
+            PYTHONPATH: /home/circleci/project/
+          command: coverage run -m unittest tests.py
+
+      - run:
+          name: Output Report
+          working_directory: ~/project/tests/
+          environment:
+            PYTHONPATH: /home/circleci/project/
+          command: coverage report
+
+  lint:
+    docker:
+      - image: cimg/python:3.10.2
+    steps:
+      - checkout
+      - python/install-packages:
+            pkg-manager: pip
+      - run: pip install --user pylint
+      - run:
+          name: Run lint
+#          working_directory: ~/project/src
+#          environment:
+#            PYTHONPATH: /home/circleci/project/
+          command: pylint -rn src --disable=missing-docstring
+
+workflows:
+  backend:
+    jobs:
+      - lint
+      - build-and-test:
+          requires:
+            - lint

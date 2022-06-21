@@ -1,0 +1,5 @@
+.config
+.idea
+tests
+.gitlab-ci.yml
+Dockerfile

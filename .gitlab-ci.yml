@@ -1,0 +1,49 @@
+stages:
+    - lint
+    - test
+    - build
+    - deploy
+
+lint:
+    stage: lint
+    image: python:latest
+    tags: 
+        - python
+    script:
+        - pip install pylint -r requirements.txt
+        - pylint -rn src --disable=missing-docstring
+
+test:
+    stage: test
+    image: python:latest
+    tags:
+        - python
+    script:
+        - pip install coverage -r requirements.txt
+        - python -m unittest "tests/test.py"
+        - coverage run -m unittest "tests/test.py"
+        - coverage report
+
+build:
+    stage: build
+    image: python:latest
+    tags:
+        - python
+    script:
+        - pip install build
+        - python -m build
+
+deploy:
+    stage: deploy
+    image: docker:dind
+    tags:
+        - docker
+    services:
+        - docker:dind
+    variables:
+        DOCKER_TLS_CERTDIR: ""
+    before_script:
+        - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD"
+    script:
+        - docker build -t "$DOCKER_REGISTRY_IMAGE:latest" .
+        - docker push "$DOCKER_REGISTRY_IMAGE:latest"
